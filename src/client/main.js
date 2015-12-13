@@ -40,6 +40,11 @@ TurbulenzEngine.onload = function onloadFn()
       relative : false,
       pitch : 1.0,
   });
+  var sound_source_mid = soundDevice.createSource({
+      position : mathDevice.v3Build(0, 0, 0),
+      relative : false,
+      pitch : 1.0,
+  });
 
   var sounds = {};
   function loadSound(base) {
@@ -60,6 +65,8 @@ TurbulenzEngine.onload = function onloadFn()
   }
   loadSound('good');
   loadSound('bad');
+  loadSound('speed_up');
+  loadSound('speed_down');
 
   var textures = {};
   function loadTexture(texname) {
@@ -463,7 +470,7 @@ TurbulenzEngine.onload = function onloadFn()
         textureRectangle : mathDevice.v4Build(0, 0, 256, 256),
       });
     }
-    current_level = 0;
+    current_level = 2; // donotcheckin
     game_state = newLevelInit;
     newLevelInit(dt);
   }
@@ -500,7 +507,7 @@ TurbulenzEngine.onload = function onloadFn()
       for (var ii = 0; ii < level_params.powerups; ++ii) {
         player.powerups.push(
           [Math.random() * level_params.length,
-          Math.floor(Math.random() * 2),
+          ii % 2,
           Math.floor(Math.random() * 2)]
         );
       }
@@ -845,8 +852,14 @@ TurbulenzEngine.onload = function onloadFn()
         if (hit_check && Math.abs(hit_check_pos - pu_pos) < powerup_size * 0.25) {
           if (arr[1]) {
             ++speed_mod;
+            if (sounds.speed_up) {
+              sound_source_mid.play(sounds.speed_up);
+            }
           } else {
             --speed_mod;
+            if (sounds.speed_down) {
+              sound_source_mid.play(sounds.speed_down);
+            }
           }
           player.powerups.splice(idx, 1);
         }

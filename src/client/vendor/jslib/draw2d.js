@@ -136,7 +136,9 @@ var Draw2DSprite = (function () {
             // Move the origin so that the sprite gets scaled around
             // it, rather than scaled around the top left corner.
             // originX = originX * (newwidth/2) / (oldwidth/2)
+            assert(isFinite(data[23]));
             data[23] = data[23] * width / data[17];
+            assert(isFinite(data[23]));
             data[17] = width;
             this._invalidate();
         }
