@@ -32,9 +32,9 @@ class GlovInput {
     input_device.addEventListener('mouseover', (x,y) => this.onMouseOver(x, y));
 
 
-    input_device.addEventListener('paddown', padcode => this.onPadDown(0, padcode));
-    input_device.addEventListener('padup', padcode => this.onPadUp(0, padcode));
-    input_device.addEventListener('padmove', (x, y, z, rx, ry, rz) => this.onPadMove(0, x, y, z, rx, ry, rz));
+    input_device.addEventListener('paddown', (padindex, padcode) => this.onPadDown(padindex, padcode));
+    input_device.addEventListener('padup', (padindex, padcode) => this.onPadUp(padindex, padcode));
+    input_device.addEventListener('padmove', (padindex, x, y, z, rx, ry, rz) => this.onPadMove(padindex, x, y, z, rx, ry, rz));
   }
   tick() {
     this.mouse_over_captured = false;
@@ -138,6 +138,7 @@ class GlovInput {
     this.pad_states[padindex][padcode] = UP_EDGE;
   }
   onPadDown(padindex, padcode) {
+    console.log(padindex, padcode);
     this.pad_states[padindex] = this.pad_states[padindex] || { axes: {} };
     this.pad_states[padindex][padcode] = DOWN_EDGE;
   }

@@ -124,22 +124,13 @@ TurbulenzEngine.onload = function onloadFn()
     return (input.isKeyDown(keyCodes.LEFT) ? 1 : 0) +
       (input.isKeyDown(keyCodes.RIGHT) ? 2 : 0);
   }, 'Left', 'Right');
-  addInputDevice(function () {
-    return (input.isPadButtonDown(0, padCodes.LEFT_SHOULDER) ? 1 : 0) +
-      (input.isPadButtonDown(0, padCodes.RIGHT_SHOULDER) ? 2 : 0);
-  }, 'LB', 'RB');
-  addInputDevice(function () {
-    return (input.isPadButtonDown(1, padCodes.LEFT_SHOULDER) ? 1 : 0) +
-      (input.isPadButtonDown(1, padCodes.RIGHT_SHOULDER) ? 2 : 0);
-  }, 'LB', 'RB');
-  addInputDevice(function () {
-    return (input.isPadButtonDown(2, padCodes.LEFT_SHOULDER) ? 1 : 0) +
-      (input.isPadButtonDown(2, padCodes.RIGHT_SHOULDER) ? 2 : 0);
-  }, 'LB', 'RB');
-  addInputDevice(function () {
-    return (input.isPadButtonDown(3, padCodes.LEFT_SHOULDER) ? 1 : 0) +
-      (input.isPadButtonDown(3, padCodes.RIGHT_SHOULDER) ? 2 : 0);
-  }, 'LB', 'RB');
+  function gamepad(idx) {
+    return (input.isPadButtonDown(idx, padCodes.LEFT_SHOULDER) ? 1 : 0) +
+      (input.isPadButtonDown(idx, padCodes.RIGHT_SHOULDER) ? 2 : 0);
+  }
+  for (var ii = 0; ii < 16; ++ii) {
+    addInputDevice(gamepad.bind(null, ii), 'LB', 'RB');
+  }
 
   var ready_countdown;
   function choosePlayerInit() {
