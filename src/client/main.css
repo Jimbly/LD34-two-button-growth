@@ -25,7 +25,7 @@ canvas {
   white-space: pre-wrap;
 }
 
-.screen {
+.screen,.screenlike {
   left: 0;
   top: 0;
   width: 100%;

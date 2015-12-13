@@ -29,7 +29,7 @@ TODO:
 * X Deploy
 * X Colors, better indication of what's going on on player start screen
 * Always use full height
-* High score name submission
+* X High score name submission
 * Music
 * ? deterministic level generator + powerup placer
 * Use full window width for gameplay, don't do scaled thing?

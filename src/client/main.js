@@ -146,14 +146,16 @@ TurbulenzEngine.onload = function onloadFn()
   var ready_countdown;
   function choosePlayerInit() {
     if (!'donotcheckin') {
-      players.push({
-        ready: true,
-        input_idx: 0,
-      });
-      // players.push({
-      //   ready: true,
-      //   input_idx: 1,
-      // });
+      if (!players.length) {
+        players.push({
+          ready: true,
+          input_idx: 0,
+        });
+        // players.push({
+        //   ready: true,
+        //   input_idx: 1,
+        // });
+      }
       game_state = playInit;
       return;
     }
@@ -515,7 +517,7 @@ TurbulenzEngine.onload = function onloadFn()
         origin: [0,0],
       });
     }
-    current_level = 0; // donotcheckin
+    current_level = 0;
     game_state = newLevelInit;
     newLevelInit(dt);
   }
@@ -582,7 +584,7 @@ TurbulenzEngine.onload = function onloadFn()
     timer += dt;
     var delta_speed_mod = dt / 3000;
     dt *= Math.pow(1.5, speed_mod);
-    //speed_mod = 10; // donotcheckin
+    // speed_mod = 10; // donotcheckin
     if (speed_mod > 0) {
       speed_mod = Math.max(0, speed_mod - delta_speed_mod);
     } else {
@@ -970,7 +972,14 @@ TurbulenzEngine.onload = function onloadFn()
     }
   }
 
+  var score_host = 'http://scores.dashingstrike.com';
+  if (window.location.host.indexOf('dashingstrike') === -1 ||
+    window.location.host.indexOf('staging')) {
+    score_host = 'http://scores.staging.dashingstrike.com';
+  }
+
   var round_end_countdown;
+  var high_score;
   function roundEndInit(dt) {
     $('.screen').hide();
     $('#roundEnd').show();
@@ -984,7 +993,7 @@ TurbulenzEngine.onload = function onloadFn()
       ((players.length === 1) ? '<h1>Level complete!</h1>' :
       '<h1>Player ' + (Number(player_ids[0]) + 1) + ' Wins!</h1>') +
       '<br/>');
-    var high_score = 0;
+    high_score = 0;
     player_ids.forEach(function (pid) {
       var player = players[pid];
       var p = player.good * 100 / player.possible;
@@ -1001,27 +1010,66 @@ TurbulenzEngine.onload = function onloadFn()
     });
     $('#round_end_results').html(html.join('\n'));
     if (current_level === num_levels - 1) {
-      $('#round_end_message').html('<h2>All levels complete!</h2>(Click anywhere to restart)');
-      //$('#highscore').show();
-      var name = 'Anon' + Math.random().toString().slice(2);
-      $.ajax({ url: 'http://scores.dashingstrike.com/api/scoreset?key=LD34&limit=10&name=' + name + '&score=' + high_score, success: function (scores) {
+      $('#round_end_message').html('<h2>All levels complete!</h2>');
+      $('#highscore').show();
+      $('#restart_block').show();
+      inputDevice.onBlur();
+      $.ajax({ url: score_host + '/api/scoreget?key=LD34&limit=10', success: function (scores) {
         var html = [];
-        var had_b = false;
         scores.forEach(function (score, idx) {
-          var b = Math.abs(score.score - high_score) < 0.01 && !had_b;
-          if (b) {
-            had_b = true;
+          var name = score.name;
+          if (name.indexOf('Anonymous') === 0) {
+            name = name.slice(0, 'Anonymous'.length);
           }
-          html.push((b ? '<b>' : '') + '#' + (idx +1) + '. ' + score.score.toFixed(1) + '%' + (b ? '</b>' : ''));
+          html.push('#' + (idx +1) + '. ' + score.score.toFixed(1) + '% ' + name);
         });
-        $('#scores').html('<h3>Global High Scores</h3><span>' + html.join('<br/>') + '</span>');
+        $('#scores').html('<h3>Global High Scores</h3><div style="text-align: left; white-space: pre-wrap;" id="score_body"></div>');
+        $('#score_body').text(html.join('\n'));
       }});
+    } else {
+      $('#highscore').hide();
+      $('#restart_block').hide();
     }
 
     round_end_countdown = 10000;
     game_state = roundEnd;
     roundEnd(dt);
   }
+
+  $('#highscoreform').submit(function (ev) {
+    var name = $('#name').val();
+    if (!name) {
+      name = 'Anonymous ' + Math.random().toString().slice(2, 8);
+    }
+    $('#highscore').hide();
+    $('#scores').html('Submitting score...');
+
+    $.ajax({ url: score_host + '/api/scoreset?key=LD34&name=' + name + '&score=' + high_score, success: function (scores) {
+      var html = [];
+      var had_b = false;
+      scores.forEach(function (score, idx) {
+        var disp_name = score.name;
+        if (disp_name.indexOf('Anonymous') === 0) {
+          disp_name = disp_name.slice(0, 'Anonymous'.length);
+        }
+        var b = Math.abs(score.score - high_score) < 0.01 && !had_b && score.name === name;
+        if (b) {
+          had_b = true;
+        }
+        if (b || html.length < 10) {
+          html.push('#' + (idx +1) + '. ' + (b ? ' *** ' : '') + score.score.toFixed(1) + '% ' + disp_name + (b ? ' ***' : ''));
+        }
+      });
+      $('#scores').html('<h3>Global High Scores</h3><div style="text-align: left; white-space: pre-wrap;" id="score_body"></div>');
+      $('#score_body').text(html.join('\n'));
+    }});
+
+    return ev.preventDefault();
+  });
+  var want_restart = false;
+  $('#restart').click(function () {
+    want_restart = true;
+  });
 
   function roundEnd(dt) {
     // dec, maybe finish
@@ -1037,7 +1085,9 @@ TurbulenzEngine.onload = function onloadFn()
     }
     if (current_level === num_levels - 1) {
       // Message/form set above
-      if (input.clickHit(0, 0, game_width, game_height)) {
+      if (want_restart) {
+        want_restart = false;
+        inputDevice.onFocus();
         game_state = choosePlayerInit;
       }
     } else {
