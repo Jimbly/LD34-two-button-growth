@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>LD34</title>
+    <title>Precision Rainbows</title>
 
     <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script -->
 
     <link rel="stylesheet" type="text/css" href="main.css">
   </head>
@@ -114,7 +115,7 @@
       /*global WebGLTurbulenzEngine*/
       window.assert = function(exp) {
         if (!exp) {
-          console.log(new Error());
+          console.log(new Error().stack);
           //alert('assertion failed');
         }
       };

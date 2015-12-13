@@ -98,7 +98,7 @@ TurbulenzEngine.onload = function onloadFn()
   var color_yellow = mathDevice.v4Build(1, 1, 0, 1);
   var color_black = mathDevice.v4Build(0, 0, 0, 1);
   var color_green = mathDevice.v4Build(0, 1, 0, 1);
-  var color_turf_good = mathDevice.v4Build(0, 1, 0, 1);
+  var color_turf_good = mathDevice.v4Build(0.4, 1, 0.2, 1);
   var color_turf_bad = mathDevice.v4Build(0.5, 0.4, 0, 1);
 
   // Cache keyCodes
@@ -138,10 +138,14 @@ TurbulenzEngine.onload = function onloadFn()
   for (var ii = 0; ii < 16; ++ii) {
     addInputDevice(gamepad.bind(null, ii), 'LB', 'RB');
   }
+  addInputDevice(function () {
+    return (input.isTouchDown(-10000, -10000, 10000 + game_width/2, 20000) ? 1 : 0) +
+      (input.isTouchDown(game_width/2, -10000, 10000, 20000) ? 2 : 0);
+  }, 'Tap on left', 'Tap on Right');
 
   var ready_countdown;
   function choosePlayerInit() {
-    if ('donotcheckin') {
+    if (!'donotcheckin') {
       players.push({
         ready: true,
         input_idx: 0,
@@ -241,7 +245,7 @@ TurbulenzEngine.onload = function onloadFn()
 
   var level_state_orig;
   var level_params;
-  var num_levels = 1; // donotcheckin 7;
+  var num_levels = 7; // donotcheckin 7;
   function initLevelState(level_idx) {
     level_params = {
       length: 7500,
@@ -259,7 +263,7 @@ TurbulenzEngine.onload = function onloadFn()
       case 0:
         // tutorial, just one side
         level_params.speed_scale_right = 0;
-        level_params.length = 100; // donotcheckin 5000;
+        level_params.length = 5000; // donotcheckin 5000;
         level_params.hints = true;
         break;
       case 1:
@@ -327,14 +331,20 @@ TurbulenzEngine.onload = function onloadFn()
     }
     level_state_orig = [getSideState(false), getSideState(true)];
   }
+  function clone(arr) {
+    return new Uint8Array(arr);
+  }
   function getLevelState() {
-    return [level_state_orig[0].slice(0), level_state_orig[1].slice(0)];
+    return [clone(level_state_orig[0]), clone(level_state_orig[1])];
   }
 
   var powerup_size = 80;
   var bar_width = 128;
   var bar_pad = 2;
   var lane_width;
+  var bg0;
+  var bg1;
+  var bgfade;
   var turf_good_left;
   var turf_bad_left;
   var turf_good_right;
@@ -343,6 +353,7 @@ TurbulenzEngine.onload = function onloadFn()
   var powerup_speed_down;
   var current_level = 0;
   var hint_shown = [];
+  var player_color = [0.8, 0.9, 0.9, 0.8];
   function playInit(dt) {
     $('.screen').hide();
     $('#play').show();
@@ -367,7 +378,7 @@ TurbulenzEngine.onload = function onloadFn()
         x,
         y: y - 20,
         rotation : 0,
-        color : color_white,
+        color: player_color,
         textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
       });
       var beam_width = lane_width / 2;
@@ -378,7 +389,8 @@ TurbulenzEngine.onload = function onloadFn()
         y,
         rotation : Math.PI/2,
         color : color_white,
-        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
+        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize),
+        origin: [0, beam_width/2],
       });
       player.beam_right = createSprite('beam.png', {
         width : 32,
@@ -387,14 +399,15 @@ TurbulenzEngine.onload = function onloadFn()
         y,
         rotation : Math.PI/2,
         color : color_white,
-        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
+        textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize),
+        origin: [0, beam_width/2],
       });
       player.bar_bg = createSprite('white', {
         width: bar_width,
         height: 28,
         x: x - bar_width/2,
         y,
-        color: color_black,
+        color: [0.25, 0.25, 0.5, 0.5],
         textureRectangle : mathDevice.v4Build(0, 0, 2, 2),
         origin: [0,0],
       });
@@ -469,8 +482,35 @@ TurbulenzEngine.onload = function onloadFn()
         color : color_white,
         textureRectangle : mathDevice.v4Build(0, 0, 256, 256),
       });
+      bg0 = createSprite('bg1.png', {
+        width: 512,
+        height: 1024,
+        x: 0,
+        y: 0,
+        color : color_white,
+        textureRectangle : mathDevice.v4Build(0, 0, 512, 1024),
+        origin: [0,0],
+      });
+      bg1 = createSprite('bg2.png', {
+        width: 512,
+        height: 1024,
+        x: 0,
+        y: 0,
+        color : color_white,
+        textureRectangle : mathDevice.v4Build(0, 0, 512, 1024),
+        origin: [0,0],
+      });
+      bgfade = createSprite('bg_fade.png', {
+        width: 512,
+        height: 1024,
+        x: 0,
+        y: 0,
+        color : color_white,
+        textureRectangle : mathDevice.v4Build(0, 0, 512, 1024),
+        origin: [0,0],
+      });
     }
-    current_level = 2; // donotcheckin
+    current_level = 0; // donotcheckin
     game_state = newLevelInit;
     newLevelInit(dt);
   }
@@ -519,6 +559,20 @@ TurbulenzEngine.onload = function onloadFn()
   var padding = 100;
   var end_delay_px = 250;
   var timer = 0;
+
+  function playSound(source, soundname) {
+    if (!sounds[soundname]) {
+      return;
+    }
+    source._last_played = source._last_played || {};
+    let last_played_time = source._last_played[soundname] || -9e9;
+    if (timer - last_played_time < 45) {
+      return;
+    }
+    source.play(sounds[soundname]);
+    source._last_played[soundname] = timer;
+  }
+
   function play(dt) {
     timer += dt;
     var delta_speed_mod = dt / 3000;
@@ -574,11 +628,28 @@ TurbulenzEngine.onload = function onloadFn()
       let y0 = game_height/2 - player.pos_offset;
       let y0_warp = game_height/2 + player.pos_offset;
 
-      player.sprite.y = y0 - 20;
+      player.sprite.y = y0 - 8;
       player.beam_left.y = y0;
       player.beam_right.y = y0;
       player.bar_bg.y = y0;
       player.bar_fg.y = y0 + bar_pad;
+
+      bg0.x = x0;
+      bg1.x = x0;
+      bgfade.x = x0;
+      bg0.setWidth(lane_width);
+      bg1.setWidth(lane_width);
+      bgfade.setWidth(lane_width);
+      bg0.y = timer * 0.1 % 1024;
+      draw2D.drawSprite(bg0);
+      bg0.y -= 1024;
+      draw2D.drawSprite(bg0);
+      bg1.y = timer * 0.12 % 1024;
+      draw2D.drawSprite(bg1);
+      bg1.y -= 1024;
+      draw2D.drawSprite(bg1);
+      bgfade.y = 0;
+      draw2D.drawSprite(bgfade);
 
       function drawTiledSpriteLeft(sprite, x, y, u, w) {
         u = u / TILE_DIST;
@@ -678,13 +749,9 @@ TurbulenzEngine.onload = function onloadFn()
           }
         }
         if (good > 0) {
-          if (sounds.good) {
-            sound_source_left.play(sounds.good);
-          }
+          playSound(sound_source_left, 'good');
         } else if (good < 0) {
-          if (sounds.bad) {
-            sound_source_left.play(sounds.bad);
-          }
+          playSound(sound_source_left, 'bad');
         }
       }
       if ((idx % 2) === 0) {
@@ -767,13 +834,9 @@ TurbulenzEngine.onload = function onloadFn()
           }
         }
         if (good > 0) {
-          if (sounds.good) {
-            sound_source_right.play(sounds.good);
-          }
+          playSound(sound_source_right, 'good');
         } else if (good < 0) {
-          if (sounds.bad) {
-            sound_source_right.play(sounds.bad);
-          }
+          playSound(sound_source_right, 'bad');
         }
       }
       if ((idx % 2) === 1) {
@@ -823,7 +886,20 @@ TurbulenzEngine.onload = function onloadFn()
         any_not_done = true;
       }
 
-      draw2D.drawSprite(player.sprite);
+      {
+        let saved_x = player.sprite.x;
+        let saved_y = player.sprite.y;
+        for (var ii = 0; ii < 8; ++ii) {
+          player.sprite.x = saved_x + Math.sin(timer * (0.005 / (ii+1)) + ii)*20;
+          player.sprite.y = saved_y + Math.sin(timer * (0.006/ (ii+1)) + ii)*20;
+          player.sprite.setWidth(256 - ii * 10);
+          player.sprite.setColor([player_color[0], player_color[1], player_color[2],
+            player_color[3] * (0.75 + 0.25*Math.sin(timer * (0.007 / (ii+1)) + ii))]);
+          draw2D.drawSprite(player.sprite);
+        }
+        player.sprite.x = saved_x;
+        player.sprite.y = saved_y;
+      }
 
       draw2D.drawSprite(player.bar_bg);
       player.bar_fg.setWidth(Math.max(player.good, 1) / Math.max(player.possible, 1) * (bar_width - bar_pad * 2));
@@ -852,14 +928,10 @@ TurbulenzEngine.onload = function onloadFn()
         if (hit_check && Math.abs(hit_check_pos - pu_pos) < powerup_size * 0.25) {
           if (arr[1]) {
             ++speed_mod;
-            if (sounds.speed_up) {
-              sound_source_mid.play(sounds.speed_up);
-            }
+            playSound(sound_source_mid, 'speed_up');
           } else {
             --speed_mod;
-            if (sounds.speed_down) {
-              sound_source_mid.play(sounds.speed_down);
-            }
+            playSound(sound_source_mid, 'speed_down');
           }
           player.powerups.splice(idx, 1);
         }
@@ -927,8 +999,7 @@ TurbulenzEngine.onload = function onloadFn()
       $('#round_end_message').html('<h2>All levels complete!</h2>(Click anywhere to restart)');
       //$('#highscore').show();
       var name = 'Anon' + Math.random().toString().slice(2);
-      // donotcheckin
-      $.ajax({ url: 'http://scores.staging.dashingstrike.com/api/scoreset?key=LD34&limit=10&name=' + name + '&score=' + high_score, success: function (scores) {
+      $.ajax({ url: 'http://scores.dashingstrike.com/api/scoreset?key=LD34&limit=10&name=' + name + '&score=' + high_score, success: function (scores) {
         var html = [];
         var had_b = false;
         scores.forEach(function (score, idx) {
@@ -942,7 +1013,7 @@ TurbulenzEngine.onload = function onloadFn()
       }});
     }
 
-    round_end_countdown = 100; // donotcheckin 10000
+    round_end_countdown = 10000;
     game_state = roundEnd;
     roundEnd(dt);
   }

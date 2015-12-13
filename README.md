@@ -19,15 +19,19 @@ TODO:
 * X player winning goes farther ahead
 * X Multi gamepad support
 * X rock that speeds it up, flower that slows down - add these power ups as a new level 3 that introduces them
-* Make pretty
-  * better grass/dirt
-  * cloud made of 5-10 puffs that are moving around
+* X Rate limit sound playing to be safe
+* X Add touch device as input
+* X Make pretty
+  * X better grass/dirt
+  * ? fade between various greens
+  * X cloud made of 5-10 puffs that are moving around
+* X Test on laptop
+* Deploy
+* Always use full height
 * Music
-* Rate limit sound playing to be safe
-* Test on laptop
-* Add touch device as input
 * High score name submission
 * Colors, better indication of what's going on on player start screen
 * ? deterministic level generator + powerup placer
 * Use full window width for gameplay, don't do scaled thing?
 * Set font size on #screen and inherit for more consistent UI, or just make immediate mode text function
+* Use full browser window on Mobile
