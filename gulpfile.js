@@ -25,7 +25,7 @@ var config = {
   client_vendor_js: ['src/client/vendor/**/*.js'],
   client_html: ['src/client/**/*.html'],
   client_css: ['src/client/**/*.css'],
-  client_static: ['src/client/**/*.png', 'src/client/**/vendor/**'],
+  client_static: ['src/client/**/*.mp3', 'src/client/**/*.wav', 'src/client/**/*.ogg', 'src/client/**/*.png', 'src/client/**/vendor/**'],
 };
 
 gulp.task('inspect', function () {

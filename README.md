@@ -1,29 +1,27 @@
-Javascript libGlov framework
+LD34 Entry
 ============================
 
-* Files can be ES2015 (through Babel) or TypeScript.
-* Server automatically restarts on any relevant file change
-* Client automatically reloads on javascript or html change
-* Client automatically dynamically reloads CSS file changes
+Engine based on https://github.com/Jimbly/turbulenz-playground (work in progress)
 
-Used SublimeText 3 packages (if using TypeScript):
-* ArcticTypescript
-
-Setup notes:
-* To generate tsd.d.ts:
-```
-npm install -g tsd
-tsd query node --action install --save
-```
-* to update: `tsd reinstall --save`
+To run
+* `npm install`
+* `npm start`
 
 TODO:
-* input
-  * dragging?
-  * auto-focus canvas
-* sound
-* use spine for sequencing, or leave this until later?
-
-* TypeScript is not detecting unused var in ts_mod.ts, need a tshint?
-* minify, bundle CSS
-* bundle vendor .js files?
+* X Allow multiple players
+* X Basic gameplay
+* X Scoring system
+* X Final summary score of all rounds / cumulative score so far
+* X sounds
+* levels 2 and 3 (maybe 4 and 5) need to be shorter (half!)
+* reverb on waby level
+* rock that speeds it up, flower that slows down
+* Make pretty
+* Text saying you need to press button or not press button
+* player winning goes farther ahead
+* Multi gamepad support
+* mp3 all sounds for firefox?
+* High score name submission
+* Rainbows turn red, shaking when doing bad stuffs
+* Polish, polish, polish
+* Use full window width for gameplay, don't do scaled thing?
