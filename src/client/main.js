@@ -44,11 +44,11 @@ TurbulenzEngine.onload = function onloadFn()
   var sounds = {};
   function loadSound(base) {
     var src = 'sounds/' + base;
-    if (soundDevice.isSupported('FILEFORMAT_WAV')) {
-      src += '.wav';
-    } else {
-      src += '.ogg';
-    }
+    // if (soundDevice.isSupported('FILEFORMAT_WAV')) {
+    src += '.wav';
+    // } else {
+    //   src += '.ogg';
+    // }
     soundDevice.createSound({
       src: src,
       onload: function (sound) {
@@ -134,7 +134,7 @@ TurbulenzEngine.onload = function onloadFn()
 
   var ready_countdown;
   function choosePlayerInit() {
-    if (!'donotcheckin') {
+    if ('donotcheckin') {
       players.push({
         ready: true,
         input_idx: 0,
@@ -234,7 +234,7 @@ TurbulenzEngine.onload = function onloadFn()
 
   var level_state_orig;
   var level_params;
-  var num_levels = 6; // donotcheckin 6
+  var num_levels = 1; // donotcheckin 7;
   function initLevelState(level_idx) {
     level_params = {
       length: 7500,
@@ -243,6 +243,7 @@ TurbulenzEngine.onload = function onloadFn()
       speed: 0.25,
       speed_scale_right: 1,
       hints: false,
+      powerups: 0,
       transform: function (x) {
         return x;
       }
@@ -251,36 +252,43 @@ TurbulenzEngine.onload = function onloadFn()
       case 0:
         // tutorial, just one side
         level_params.speed_scale_right = 0;
-        level_params.length = 100000; // donotcheckin 5000;
+        level_params.length = 100; // donotcheckin 5000;
         level_params.hints = true;
         break;
       case 1:
         // default
         break;
       case 2:
+        // add powerups
+        level_params.powerups = 10;
+        break;
+      case 3:
         // fast
+        level_params.powerups = 10;
         level_params.length = 22500;
         level_params.speed = 0.65;
         level_params.min_len = 100;
         level_params.max_len = 400;
         break;
-      case 3:
+      case 4:
         // different speeds
+        level_params.powerups = 10;
         level_params.length = 10000,
         level_params.speed_scale_right = 0.5;
         break;
-      case 4:
+      case 5:
         // reverse!
         level_params.length = 10000,
         level_params.speed_scale_right = -1;
         break;
-      case 5:
+      case 6:
         // warp!
         level_params.transform = function (x) {
           var sign = x < 0 ? -1 : 1;
           x = Math.abs(x);
           return sign * Math.pow(x/2, 1.3);
         };
+        level_params.powerups = 10;
         level_params.length = 7500;
         break;
     }
@@ -316,6 +324,7 @@ TurbulenzEngine.onload = function onloadFn()
     return [level_state_orig[0].slice(0), level_state_orig[1].slice(0)];
   }
 
+  var powerup_size = 80;
   var bar_width = 128;
   var bar_pad = 2;
   var lane_width;
@@ -323,6 +332,8 @@ TurbulenzEngine.onload = function onloadFn()
   var turf_bad_left;
   var turf_good_right;
   var turf_bad_right;
+  var powerup_speed_up;
+  var powerup_speed_down;
   var current_level = 0;
   var hint_shown = [];
   function playInit(dt) {
@@ -435,16 +446,34 @@ TurbulenzEngine.onload = function onloadFn()
         textureRectangle : mathDevice.v4Build(spriteSize, 0, 0, spriteSize),
         origin: [0,height],
       });
+      powerup_speed_up = createSprite('speed_up.png', {
+        width: powerup_size,
+        height: powerup_size,
+        x: 0,
+        y: 0,
+        color : color_white,
+        textureRectangle : mathDevice.v4Build(0, 0, 256, 256),
+      });
+      powerup_speed_down = createSprite('speed_down.png', {
+        width: powerup_size,
+        height: powerup_size,
+        x: 0,
+        y: 0,
+        color : color_white,
+        textureRectangle : mathDevice.v4Build(0, 0, 256, 256),
+      });
     }
     current_level = 0;
     game_state = newLevelInit;
     newLevelInit(dt);
   }
 
+  var speed_mod = 0;
   function newLevelInit(dt) {
     $('.screen').hide();
     $('#play').show();
     initLevelState(current_level);
+    speed_mod = 0;
     players.forEach(function (player, idx) {
       var pos0 = current_level === 0 ? -500 : -350;
       player.pos = pos0;
@@ -467,6 +496,14 @@ TurbulenzEngine.onload = function onloadFn()
         player.pos = player.pos_right;
         player.pos_right = t;
       }
+      player.powerups = [];
+      for (var ii = 0; ii < level_params.powerups; ++ii) {
+        player.powerups.push(
+          [Math.random() * level_params.length,
+          Math.floor(Math.random() * 2),
+          Math.floor(Math.random() * 2)]
+        );
+      }
     });
     game_state = play;
     play(dt);
@@ -474,7 +511,17 @@ TurbulenzEngine.onload = function onloadFn()
 
   var padding = 100;
   var end_delay_px = 250;
+  var timer = 0;
   function play(dt) {
+    timer += dt;
+    var delta_speed_mod = dt / 3000;
+    dt *= Math.pow(1.5, speed_mod);
+    //speed_mod = 10; // donotcheckin
+    if (speed_mod > 0) {
+      speed_mod = Math.max(0, speed_mod - delta_speed_mod);
+    } else {
+      speed_mod = Math.min(0, speed_mod + delta_speed_mod);
+    }
     var any_not_done = false;
     // determine appropriate positional offsets
     var min_score=1;
@@ -775,6 +822,36 @@ TurbulenzEngine.onload = function onloadFn()
       player.bar_fg.setWidth(Math.max(player.good, 1) / Math.max(player.possible, 1) * (bar_width - bar_pad * 2));
       draw2D.drawSprite(player.bar_fg);
 
+      player.powerups.forEach(function (arr, idx) {
+        let pu_pos = arr[0];
+        let sprite = powerup_speed_down;
+        if (arr[1] === 1) {
+          sprite = powerup_speed_up;
+        }
+        let pos0 = screen_pos0_left;
+        let hit_check = state & 1;
+        let hit_check_pos = this_left_pos;
+        if (arr[2]) {
+          pos0 = screen_pos0_right;
+          hit_check = state & 2;
+          hit_check_pos = this_right_pos;
+        }
+        let scale = 1 + Math.abs(Math.sin(timer*0.004))*0.2;
+        sprite.setWidth(powerup_size * scale);
+        sprite.setHeight(powerup_size * scale);
+        sprite.x = x0 + lane_width / 4 + (arr[2] ? lane_width/2 : 0);
+        sprite.y = game_height - (pu_pos - pos0);
+        draw2D.drawSprite(sprite);
+        if (hit_check && Math.abs(hit_check_pos - pu_pos) < powerup_size * 0.25) {
+          if (arr[1]) {
+            ++speed_mod;
+          } else {
+            --speed_mod;
+          }
+          player.powerups.splice(idx, 1);
+        }
+      });
+
       let hint = '';
       if (level_params.hints) {
         if (player.miss_streak > 80) {
@@ -837,26 +914,22 @@ TurbulenzEngine.onload = function onloadFn()
       $('#round_end_message').html('<h2>All levels complete!</h2>(Click anywhere to restart)');
       //$('#highscore').show();
       var name = 'Anon' + Math.random().toString().slice(2);
-      $.ajax({ url: 'api/scoreset?name=' + name + '&score=' + high_score, success: function (scores) {
-        var keys = Object.keys(scores);
-        keys.sort(function (k1, k2) {
-          return scores[k2] - scores[k1];
-        });
-        keys = keys.slice(0, 10);
+      // donotcheckin
+      $.ajax({ url: 'http://scores.staging.dashingstrike.com/api/scoreset?key=LD34&limit=10&name=' + name + '&score=' + high_score, success: function (scores) {
         var html = [];
         var had_b = false;
-        keys.forEach(function (name, idx) {
-          var b = Math.abs(scores[name] - high_score) < 0.01 && !had_b;
+        scores.forEach(function (score, idx) {
+          var b = Math.abs(score.score - high_score) < 0.01 && !had_b;
           if (b) {
             had_b = true;
           }
-          html.push((b ? '<b>' : '') + '#' + (idx +1) + '. ' + scores[name].toFixed(1) + '%' + (b ? '</b>' : ''));
+          html.push((b ? '<b>' : '') + '#' + (idx +1) + '. ' + score.score.toFixed(1) + '%' + (b ? '</b>' : ''));
         });
-        $('#scores').html('<h3>High Scores</h3>' + html.join('<br/>'));
+        $('#scores').html('<h3>Global High Scores</h3><span>' + html.join('<br/>') + '</span>');
       }});
     }
 
-    round_end_countdown = 10000;
+    round_end_countdown = 100; // donotcheckin 10000
     game_state = roundEnd;
     roundEnd(dt);
   }
@@ -869,6 +942,10 @@ TurbulenzEngine.onload = function onloadFn()
         round_end_countdown -= dt * 5;
       }
     });
+    if (current_level === num_levels - 1) {
+      // window.location.reload();
+      // current_level = -1; // donotcheckin
+    }
     if (current_level === num_levels - 1) {
       // Message/form set above
       if (input.clickHit(0, 0, game_width, game_height)) {

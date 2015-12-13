@@ -130,6 +130,7 @@ var Draw2DSprite = (function () {
 
     Draw2DSprite.prototype.setWidth = function (width) {
         width *= 0.5;
+        assert(isFinite(width));
         var data = this.data;
         if (data[17] !== width) {
             // Move the origin so that the sprite gets scaled around
@@ -211,6 +212,8 @@ var Draw2DSprite = (function () {
     Draw2DSprite.prototype.setOrigin = function (origin) {
         var originX = origin[0];
         var originY = origin[1];
+        assert(isFinite(originX) && isFinite(originY));
+
         var data = this.data;
         if (data[23] !== originX || data[24] !== originY) {
             data[23] = originX;
@@ -436,6 +439,8 @@ var Draw2DSprite = (function () {
         var origin = params.origin;
         data[23] = (origin ? origin[0] : data[17]);
         data[24] = (origin ? origin[1] : data[18]);
+        assert(isFinite(data[23]));
+        assert(isFinite(data[24]));
 
         s._invalidate();
         return s;

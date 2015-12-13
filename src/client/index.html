@@ -38,7 +38,7 @@
           <div class="flexcenter" style="flex:1; text-align: center;"></div>
           <div class="flexcenter" style="text-align: center" id="round_end_results"></div>
           <div class="flexcenter" style="text-align: center" id="round_end_message"></div>
-          <div class="flexcenter" style="overflow: hidden" id="scores"></div>
+          <div class="flexcenter" style="text-align: center; overflow: hidden" id="scores"></div>
           <div class="flexcenter" style="flex:1; text-align: center;"></div>
         </div>
       </div>
@@ -112,6 +112,12 @@
 
     <script type="text/javascript">
       /*global WebGLTurbulenzEngine*/
+      window.assert = function(exp) {
+        if (!exp) {
+          console.log(new Error());
+          //alert('assertion failed');
+        }
+      };
       // Embedded code and startup code.
       window.onload = function () {
         var appEntry = TurbulenzEngine.onload;
