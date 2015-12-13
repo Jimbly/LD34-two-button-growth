@@ -128,10 +128,22 @@ TurbulenzEngine.onload = function onloadFn()
     return (input.isPadButtonDown(0, padCodes.LEFT_SHOULDER) ? 1 : 0) +
       (input.isPadButtonDown(0, padCodes.RIGHT_SHOULDER) ? 2 : 0);
   }, 'LB', 'RB');
+  addInputDevice(function () {
+    return (input.isPadButtonDown(1, padCodes.LEFT_SHOULDER) ? 1 : 0) +
+      (input.isPadButtonDown(1, padCodes.RIGHT_SHOULDER) ? 2 : 0);
+  }, 'LB', 'RB');
+  addInputDevice(function () {
+    return (input.isPadButtonDown(2, padCodes.LEFT_SHOULDER) ? 1 : 0) +
+      (input.isPadButtonDown(2, padCodes.RIGHT_SHOULDER) ? 2 : 0);
+  }, 'LB', 'RB');
+  addInputDevice(function () {
+    return (input.isPadButtonDown(3, padCodes.LEFT_SHOULDER) ? 1 : 0) +
+      (input.isPadButtonDown(3, padCodes.RIGHT_SHOULDER) ? 2 : 0);
+  }, 'LB', 'RB');
 
   var ready_countdown;
   function choosePlayerInit() {
-    if ('donotcheckin') {
+    if (!'donotcheckin') {
       players.push({
         ready: true,
         input_idx: 0,
@@ -231,7 +243,7 @@ TurbulenzEngine.onload = function onloadFn()
 
   var level_state_orig;
   var level_params;
-  var num_levels = 1; // donotcheckin 6
+  var num_levels = 6; // donotcheckin 6
   function initLevelState(level_idx) {
     level_params = {
       length: 7500,
@@ -239,6 +251,7 @@ TurbulenzEngine.onload = function onloadFn()
       min_len: 60,
       speed: 0.25,
       speed_scale_right: 1,
+      hints: false,
       transform: function (x) {
         return x;
       }
@@ -247,7 +260,8 @@ TurbulenzEngine.onload = function onloadFn()
       case 0:
         // tutorial, just one side
         level_params.speed_scale_right = 0;
-        level_params.length = 1000; // donotcheckin 5000;
+        level_params.length = 100000; // donotcheckin 5000;
+        level_params.hints = true;
         break;
       case 1:
         // default
@@ -289,6 +303,13 @@ TurbulenzEngine.onload = function onloadFn()
       let bit = 1;
       while (pos < level_len) {
         let len = Math.floor(Math.random() * (level_params.max_len - level_params.min_len)) + level_params.min_len;
+        if (level_idx === 0) {
+          if (pos === 0) {
+            len = 300;
+          } else if (pos === 300) {
+            len = 400;
+          }
+        }
         while (len && pos < level_len) {
           state[pos] = bit;
           ++pos;
@@ -312,9 +333,19 @@ TurbulenzEngine.onload = function onloadFn()
   var turf_good_right;
   var turf_bad_right;
   var current_level = 0;
+  var hint_shown = [];
   function playInit(dt) {
     $('.screen').hide();
     $('#play').show();
+    hint_shown = [];
+    $('#hints').html(players.map(function (p, idx) {
+      var pad = '<div class="hint_pad fluid">&nbsp;</div>';
+      var text = '<div id="hint' + idx + '" class="hint_text fluid"></div>';
+      if (idx % 2) {
+        return text + pad;
+      }
+      return pad + text;
+    }).join(''));
     var eff_players = Math.max(players.length, 1.5);
     lane_width = game_width / eff_players;
     players.forEach(function (player, idx) {
@@ -424,14 +455,19 @@ TurbulenzEngine.onload = function onloadFn()
     $('#play').show();
     initLevelState(current_level);
     players.forEach(function (player, idx) {
-      player.pos = -350;
-      player.pos_right = -350;
+      var pos0 = current_level === 0 ? -500 : -350;
+      player.pos = pos0;
+      player.pos_right = pos0;
+      player.pos_offset = 0;
+      player.new_pos_offset = 0;
       if (level_params.speed_scale_right < 0) {
         player.pos_right = level_state_orig[1].length + 350;
       }
       player.good = 0;
       player.possible = 0;
       player.level_state = getLevelState();
+      player.miss_streak = 0;
+      player.bad_hit_streak = 0;
       if (idx % 2) {
         let t = player.level_state[0];
         player.level_state[0] = player.level_state[1];
@@ -449,6 +485,22 @@ TurbulenzEngine.onload = function onloadFn()
   var end_delay_px = 250;
   function play(dt) {
     var any_not_done = false;
+    // determine appropriate positional offsets
+    var min_score=1;
+    var max_score=0;
+    var avg_score=0;
+    players.forEach(function (player) {
+      var s = (player.good + 500) / (player.possible + 1000);
+      avg_score += s;
+      min_score = Math.min(min_score, s);
+      max_score = Math.max(max_score, s);
+    });
+    avg_score /= players.length;
+    players.forEach(function (player) {
+      var s = (player.good + 500) / (player.possible + 1000);
+      player.new_pos_offset = (s - avg_score) * game_height * 0.75;
+    });
+
     players.forEach(function (player, idx) {
       var speed_scale_left = 1;
       var speed_scale_right = level_params.speed_scale_right;
@@ -464,23 +516,36 @@ TurbulenzEngine.onload = function onloadFn()
       var last_right_pos = Math.floor(player.pos_right) + 1;
       player.pos += dt * level_params.speed * speed_scale_left;
       player.pos_right += dt * level_params.speed * speed_scale_right;
+      if (player.new_pos_offset !== player.pos_offset) {
+        player.pos += player.new_pos_offset - player.pos_offset;
+        player.pos_right += player.new_pos_offset - player.pos_offset;
+        player.pos_offset = player.new_pos_offset;
+      }
       var this_left_pos = Math.floor(player.pos);
       var this_right_pos = Math.floor(player.pos_right);
 
       const TILE_DIST = 256;
       const max_len = 10;
-      let y0 = game_height/2;
+      let y0 = game_height/2 - player.pos_offset;
+      let y0_warp = game_height/2 + player.pos_offset;
+
+      player.sprite.y = y0 - 20;
+      player.beam_left.y = y0;
+      player.beam_right.y = y0;
+      player.bar_bg.y = y0;
+      player.bar_fg.y = y0 + bar_pad;
+
       function drawTiledSpriteLeft(sprite, x, y, u, w) {
         u = u / TILE_DIST;
         var iu = Math.floor(u);
         var du = w / TILE_DIST;
         var u0 = u - iu;
         var u1 = u + du - iu;
-        let y0_trans = level_params.transform(y - y0) + y0;
-        let y1_trans = level_params.transform((y + w) - y0) + y0;
+        let y0_trans = level_params.transform(y - y0_warp) + y0_warp;
+        let y1_trans = level_params.transform((y + w) - y0_warp) + y0_warp;
         if (u1 > 1) {
           var frac0 = (1 - u0) / du;
-          let ymid_trans = level_params.transform((y + frac0 * w) - y0) + y0;
+          let ymid_trans = level_params.transform((y + frac0 * w) - y0_warp) + y0_warp;
           sprite.x = x;
           sprite.y = game_height - y0_trans;
           sprite.setWidth(ymid_trans - y0_trans);
@@ -505,11 +570,11 @@ TurbulenzEngine.onload = function onloadFn()
         var du = w / TILE_DIST;
         var u0 = u - iu;
         var u1 = u + du - iu;
-        let y0_trans = level_params.transform(y - y0) + y0;
-        let y1_trans = level_params.transform((y + w) - y0) + y0;
+        let y0_trans = level_params.transform(y - y0_warp) + y0_warp;
+        let y1_trans = level_params.transform((y + w) - y0_warp) + y0_warp;
         if (u1 > 1) {
           var frac0 = (1 - u0) / du;
-          let ymid_trans = level_params.transform((y + frac0 * w) - y0) + y0;
+          let ymid_trans = level_params.transform((y + frac0 * w) - y0_warp) + y0_warp;
           sprite.x = x;
           sprite.y = game_height - y0_trans;
           sprite.setWidth(ymid_trans - y0_trans);
@@ -532,23 +597,26 @@ TurbulenzEngine.onload = function onloadFn()
       // left
       let side_state = player.level_state[0];
       let orig_state = level_state_orig[(idx % 2) ? 1 : 0];
-      let screen_pos0_left = player.pos - game_height/2;
-      let screen_pos1_left = screen_pos0_left + game_height;
+      let screen_pos0_left = player.pos - game_height/2 - player.pos_offset;
+      let screen_pos1_left = screen_pos0_left + game_height - player.pos_offset;
       let max = Math.min(side_state.length, Math.floor(screen_pos1_left + padding));
+      let good = 0;
       if (state & 1) {
         // needs tiling to be cool!
         // var rect = player.beam_left.getTextureRectangle();
         // rect[1] += dt/2;
         // rect[3] += dt/2;
         // player.beam_left.setTextureRectangle(rect);
+        let y_orig = player.beam_left.y;
         if (orig_state[this_left_pos]) {
+          player.beam_left.y += Math.random()*8 - 4;
           player.beam_left.setColor([0.2, 0, 0.5, 1]);
         } else {
           player.beam_left.setColor(color_white);
         }
         draw2D.drawSprite(player.beam_left);
+        player.beam_left.y = y_orig;
         // flip bits
-        let good = 0;
         if (speed_scale_left < 0) {
           for (let pos = last_left_pos; pos >= this_left_pos; --pos) {
             if (pos >= 0 && pos < side_state.length) {
@@ -574,6 +642,17 @@ TurbulenzEngine.onload = function onloadFn()
           }
         }
       }
+      if ((idx % 2) === 0) {
+        if (state & 1) {
+          if (good > 0) {
+            player.bad_hit_streak = 0;
+          } else if (good < 0) {
+            player.bad_hit_streak += -good;
+          }
+        } else {
+          player.bad_hit_streak = 0;
+        }
+      }
       for (let ii = Math.max(0, Math.floor(screen_pos0_left - padding)); ii < max; ) {
         let bit = side_state[ii];
         let len = 0;
@@ -593,6 +672,16 @@ TurbulenzEngine.onload = function onloadFn()
             player.good++;
           }
           player.possible++;
+          if ((idx % 2) === 0) {
+            if (side_state[pos]) {
+              player.miss_streak = 0;
+            } else {
+              if (!(state & 1)) {
+                // it's bad, and the player is not hitting it
+                player.miss_streak++;
+              }
+            }
+          }
         }
       }
       if (this_left_pos < side_state.length + end_delay_px && speed_scale_left > 0) {
@@ -602,18 +691,21 @@ TurbulenzEngine.onload = function onloadFn()
       // right
       side_state = player.level_state[1];
       orig_state = level_state_orig[(idx % 2) ? 0 : 1];
-      let screen_pos0_right = player.pos_right - game_height/2;
-      let screen_pos1_right = screen_pos0_right + game_height;
+      let screen_pos0_right = player.pos_right - game_height/2 - player.pos_offset;
+      let screen_pos1_right = screen_pos0_right + game_height - player.pos_offset;
       max = Math.min(side_state.length, Math.floor(screen_pos1_right + padding));
+      good = 0;
       if (state & 2) {
+        let y_orig = player.beam_right.y;
         if (orig_state[this_right_pos]) {
+          player.beam_left.y += Math.random()*8 - 4;
           player.beam_right.setColor([0.2, 0, 0.5, 1]);
         } else {
           player.beam_right.setColor(color_white);
         }
         draw2D.drawSprite(player.beam_right);
+        player.beam_right.y = y_orig;
         // Flip bits
-        let good = 0;
         if (speed_scale_right < 0) {
           for (let pos = last_right_pos; pos >= this_right_pos; --pos) {
             if (pos >= 0 && pos < side_state.length) {
@@ -639,6 +731,17 @@ TurbulenzEngine.onload = function onloadFn()
           }
         }
       }
+      if ((idx % 2) === 1) {
+        if (state & 2) {
+          if (good > 0) {
+            player.bad_hit_streak = 0;
+          } else if (good < 0) {
+            player.bad_hit_streak += -good;
+          }
+        } else {
+          player.bad_hit_streak = 0;
+        }
+      }
       for (let ii = Math.max(0, Math.floor(screen_pos0_right - padding)); ii < max; ) {
         let bit = side_state[ii];
         let len = 0;
@@ -659,6 +762,16 @@ TurbulenzEngine.onload = function onloadFn()
             player.good++;
           }
           player.possible++;
+          if ((idx % 2) === 1) {
+            if (side_state[pos]) {
+              player.miss_streak = 0;
+            } else {
+              if (!(state & 2)) {
+                // it's bad, and the player is not hitting it
+                player.miss_streak++;
+              }
+            }
+          }
         }
       }
       if (this_right_pos < side_state.length + end_delay_px && speed_scale_right > 0) {
@@ -670,6 +783,28 @@ TurbulenzEngine.onload = function onloadFn()
       draw2D.drawSprite(player.bar_bg);
       player.bar_fg.setWidth(Math.max(player.good, 1) / Math.max(player.possible, 1) * (bar_width - bar_pad * 2));
       draw2D.drawSprite(player.bar_fg);
+
+      let hint = '';
+      if (level_params.hints) {
+        if (player.miss_streak > 80) {
+          hint = 'Shoot the unhealthy plants!';
+        } else if (player.bad_hit_streak > 40) {
+          hint = 'Do not shoot the healthy plants!';
+        }
+      }
+      if (hint !== hint_shown[idx]) {
+        $('#hint' + idx).text(hint);
+      }
+      if (hint) {
+        if (!hint_shown[idx]) {
+          $('#hint' + idx).addClass('shown');
+        }
+      } else {
+        if (hint_shown[idx]) {
+          $('#hint' + idx).removeClass('shown');
+        }
+      }
+      hint_shown[idx] = hint;
     });
 
     if (!any_not_done) {
@@ -824,7 +959,7 @@ TurbulenzEngine.onload = function onloadFn()
     draw2D.configure(configureParams);
 
     if (window.need_repos) {
-      window.need_repos = false;
+      --window.need_repos;
       var viewport = draw2D.getScreenSpaceViewport();
       $('#screen').css({
         left: viewport[0],

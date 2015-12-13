@@ -29,6 +29,11 @@
           <div class="hflex" style="flex: 10;" id="players">
           </div>
         </div>
+        <div id="play" class="screen vflex" style="display: none;">
+          <div class="flexcenter" style="flex:1; text-align: center;"></div>
+          <div class="hflex" id="hints"></div>
+          <div class="flexcenter" style="flex:1; text-align: center;"></div>
+        </div>
         <div id="roundEnd" class="screen vflex" style="display: none;">
           <div class="flexcenter" style="flex:1; text-align: center;"></div>
           <div class="flexcenter" style="text-align: center" id="round_end_results"></div>
@@ -124,7 +129,7 @@
           canvas.height = window.innerHeight;
           canvas.focus();
           // may force trigger immediate draw too?
-          window.need_repos = true;
+          window.need_repos = 10;
         }
         // resize the canvas to fill browser window dynamically
         window.addEventListener('resize', resizeCanvas, false);

@@ -6,6 +6,7 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  overflow: hidden;
 }
 
 #content {
@@ -72,4 +73,19 @@ canvas {
 
 #roundEnd #round_end_results {
   font-size: 30px;
+}
+
+.hint_text {
+  margin-top: 15%;
+  margin-right: 20px;
+  margin-left: 20px;
+  text-align: center;
+  padding: 10px;
+  font-size: 2rem;
+}
+
+.hint_text.shown {
+  opacity: 0.75;
+  background-color: #524;
+  border-radius: 5px;
 }
