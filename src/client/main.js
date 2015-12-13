@@ -174,6 +174,7 @@ TurbulenzEngine.onload = function onloadFn()
       });
       var state = func();
       if (player === null) {
+        func.used = false;
         // check for new player
         if (state) {
           players.push({
@@ -183,6 +184,7 @@ TurbulenzEngine.onload = function onloadFn()
           players_changed = true;
         }
       } else {
+        func.used = true;
         // toggle ready
         if (state & 1) {
           player.ready = false;
@@ -198,7 +200,6 @@ TurbulenzEngine.onload = function onloadFn()
     if (ready_count && ready_count === players.length) {
       if (ready_countdown === null) {
         // start it
-        // TODO: up this back up to 3000
         ready_countdown = 3000;
       } else {
         // dec, maybe finish
@@ -208,12 +209,12 @@ TurbulenzEngine.onload = function onloadFn()
           game_state = playInit;
         }
       }
-      $('#ready').html('All players ready<br/><br/>Game starting in ' + (ready_countdown / 1000).toFixed(1) + 's...');
+      $('#ready').html('<span class="all_ready">All players ready</span><br/><br/>Game starting in ' + (ready_countdown / 1000).toFixed(1) + 's...');
     } else if (!players.length) {
       $('#ready').html('');
     } else {
       ready_countdown = null;
-      $('#ready').html('Game will begin after all players are ready');
+      $('#ready').html('<span class="not_ready">Game will begin after all players are ready</span>');
     }
     if (players_changed) {
       players_changed = false;
@@ -221,22 +222,26 @@ TurbulenzEngine.onload = function onloadFn()
       players.forEach(function (player, idx) {
         var input_device = input_devices[player.input_idx];
         html.push('<div class="player">',
-          ['Player ' + (idx + 1) + (player.ready ? '' : ' NOT') + ' ready!',
+          ['Player ' + (idx + 1) + (player.ready ? '<span class="ready">' : ' <span class="not_ready">NOT') + ' ready!</span>',
           '',
           input_device.label_left + ' - Unready',
           input_device.label_right + ' - Ready',
           ].join('<br/>'),
           '</div>');
       });
+      var help = [
+        '(Open slot)',
+        '',
+        'Enter with one of:'];
+      if (!input_devices[0].used) {
+        help.push('<code>A/D</code>');
+      }
+      if (!input_devices[1].used) {
+        help.push('<code>Left/Right</code>');
+      }
+      help.push('<code>Gamepad LB/RB</code>');
       html.push('<div class="player">',
-        [
-          'Player ' + (players.length + 1),
-          '',
-          'Enter with one of:',
-          // TODO: Dynamic list
-          '<code>A/D</code>',
-          '<code>Left/Right</code>',
-          '<code>Gamepad LB/RB</code>'].join('<br/>'),
+        help.join('<br/>'),
         '</div>');
       $('#players').html(html.join('\n'));
     }
@@ -299,7 +304,7 @@ TurbulenzEngine.onload = function onloadFn()
           x = Math.abs(x);
           return sign * Math.pow(x/2, 1.3);
         };
-        level_params.powerups = 10;
+        level_params.powerups = 0;
         level_params.length = 7500;
         break;
     }

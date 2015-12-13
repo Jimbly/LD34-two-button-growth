@@ -26,11 +26,11 @@ TODO:
   * ? fade between various greens
   * X cloud made of 5-10 puffs that are moving around
 * X Test on laptop
-* Deploy
+* X Deploy
+* X Colors, better indication of what's going on on player start screen
 * Always use full height
-* Music
 * High score name submission
-* Colors, better indication of what's going on on player start screen
+* Music
 * ? deterministic level generator + powerup placer
 * Use full window width for gameplay, don't do scaled thing?
 * Set font size on #screen and inherit for more consistent UI, or just make immediate mode text function

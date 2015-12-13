@@ -89,3 +89,11 @@ canvas {
   background-color: #524;
   border-radius: 5px;
 }
+
+.all_ready, .ready {
+  color: #8F8;
+  font-weight: bold;
+}
+.not_ready {
+  color: red;
+}

@@ -137,6 +137,9 @@ var Draw2DSprite = (function () {
             // it, rather than scaled around the top left corner.
             // originX = originX * (newwidth/2) / (oldwidth/2)
             assert(isFinite(data[23]));
+            if (!isFinite(data[23])) {
+              data[23] = 0;
+            }
             data[23] = data[23] * width / data[17];
             assert(isFinite(data[23]));
             data[17] = width;
@@ -217,8 +220,10 @@ var Draw2DSprite = (function () {
         assert(isFinite(originX) && isFinite(originY));
 
         var data = this.data;
+        assert(isFinite(data[23]));
         if (data[23] !== originX || data[24] !== originY) {
             data[23] = originX;
+            assert(isFinite(data[23]));
             data[24] = originY;
             this._invalidate();
         }
