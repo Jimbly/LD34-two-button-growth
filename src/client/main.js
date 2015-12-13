@@ -90,6 +90,18 @@ TurbulenzEngine.onload = function onloadFn()
     });
     return sprite;
   }
+
+  // Preload
+  loadTexture('beam.png');
+  loadTexture('bg1.png');
+  loadTexture('bg2.png');
+  loadTexture('bg_fade.png');
+  loadTexture('cloud.png');
+  loadTexture('speed_down.png');
+  loadTexture('speed_up.png');
+  loadTexture('turf_bad.png');
+  loadTexture('turf_good.png');
+
   // Viewport for Draw2D.
   var game_width = 1280;
   var game_height = 960;
@@ -143,6 +155,12 @@ TurbulenzEngine.onload = function onloadFn()
       (input.isTouchDown(game_width/2, -10000, 10000, 20000) ? 2 : 0);
   }, 'Tap on left', 'Tap on Right');
 
+  var score_host = 'http://scores.dashingstrike.com';
+  if (window.location.host.indexOf('dashingstrike') === -1 ||
+    window.location.host.indexOf('staging')) {
+    score_host = 'http://scores.staging.dashingstrike.com';
+  }
+
   var ready_countdown;
   function choosePlayerInit() {
     if (!'donotcheckin') {
@@ -161,6 +179,19 @@ TurbulenzEngine.onload = function onloadFn()
     }
     $('.screen').hide();
     $('#choosePlayer').show();
+    $.ajax({ url: score_host + '/api/scoreget?key=LD34&limit=10', success: function (scores) {
+      var html = [];
+      scores.forEach(function (score, idx) {
+        var name = score.name;
+        if (name.indexOf('Anonymous') === 0) {
+          name = name.slice(0, 'Anonymous'.length);
+        }
+        html.push('#' + (idx +1) + '. ' + score.score.toFixed(1) + '% ' + name);
+      });
+      $('#main_highscores').html('<h3>Global High Scores</h3><div style="text-align: left; white-space: pre-wrap;" id="score_body"></div>');
+      $('#score_body').text(html.join('\n'));
+    }});
+
     ready_countdown = null;
     game_state = choosePlayer;
   }
@@ -378,6 +409,9 @@ TurbulenzEngine.onload = function onloadFn()
     players.forEach(function (player, idx) {
       var spriteSize = 256;
       var x = lane_width * idx + lane_width/2;
+      if (players.length === 1) {
+        x += lane_width * 0.25;
+      }
       var y = game_height / 2;
       player.sprite = createSprite('cloud.png', {
         width : spriteSize,
@@ -615,7 +649,10 @@ TurbulenzEngine.onload = function onloadFn()
         speed_scale_right = 1;
       }
       var x0 = lane_width * idx;
-      var x1 = lane_width * (idx + 1);
+      if (players.length === 1) {
+        x0 += lane_width * 0.25;
+      }
+      var x1 = x0 + lane_width;
       var input_device = input_devices[player.input_idx];
       var state = input_device();
       var last_left_pos = Math.floor(player.pos) + 1;
@@ -970,12 +1007,6 @@ TurbulenzEngine.onload = function onloadFn()
     if (!any_not_done) {
       game_state = roundEndInit;
     }
-  }
-
-  var score_host = 'http://scores.dashingstrike.com';
-  if (window.location.host.indexOf('dashingstrike') === -1 ||
-    window.location.host.indexOf('staging')) {
-    score_host = 'http://scores.staging.dashingstrike.com';
   }
 
   var round_end_countdown;
