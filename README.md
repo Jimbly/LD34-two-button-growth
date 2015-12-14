@@ -31,8 +31,8 @@ TODO:
 * Always use full height
 * X High score name submission
 * X View high scores from main menu
-* Music
+* X Set font size on #screen and inherit for more consistent UI
+* X Music
 * ? deterministic level generator + powerup placer
-* Use full window width for gameplay, don't do scaled thing?
-* Set font size on #screen and inherit for more consistent UI, or just make immediate mode text function
+* Use full window width for multiplayer gameplay, don't do scaled thing?
 * Use full browser window on Mobile

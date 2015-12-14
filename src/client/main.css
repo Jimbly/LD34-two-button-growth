@@ -72,7 +72,7 @@ canvas {
 }
 
 #roundEnd #round_end_results {
-  font-size: 30px;
+  font-size: 2em;
 }
 
 .hint_text {
@@ -81,7 +81,7 @@ canvas {
   margin-left: 20px;
   text-align: center;
   padding: 10px;
-  font-size: 2rem;
+  font-size: 2em;
 }
 
 .hint_text.shown {

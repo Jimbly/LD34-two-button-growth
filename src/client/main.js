@@ -31,19 +31,25 @@ TurbulenzEngine.onload = function onloadFn()
   camera.updateViewMatrix();
   soundDevice.listenerTransform = camera.matrix;
   var sound_source_left = soundDevice.createSource({
-      position : mathDevice.v3Build(-1, 0, 0),
-      relative : false,
-      pitch : 1.0,
+    position : mathDevice.v3Build(-1, 0, 0),
+    relative : false,
+    pitch : 1.0,
   });
   var sound_source_right = soundDevice.createSource({
-      position : mathDevice.v3Build(1, 0, 0),
-      relative : false,
-      pitch : 1.0,
+    position : mathDevice.v3Build(1, 0, 0),
+    relative : false,
+    pitch : 1.0,
   });
   var sound_source_mid = soundDevice.createSource({
-      position : mathDevice.v3Build(0, 0, 0),
-      relative : false,
-      pitch : 1.0,
+    position : mathDevice.v3Build(0, 0, 0),
+    relative : false,
+    pitch : 1.0,
+  });
+  var sound_source_music = soundDevice.createSource({
+    position : mathDevice.v3Build(0, 0, 0),
+    relative : false,
+    pitch : 1.0,
+    looping: true,
   });
 
   var sounds = {};
@@ -67,6 +73,7 @@ TurbulenzEngine.onload = function onloadFn()
   loadSound('bad');
   loadSound('speed_up');
   loadSound('speed_down');
+  loadSound('muzak');
 
   var textures = {};
   function loadTexture(texname) {
@@ -157,11 +164,13 @@ TurbulenzEngine.onload = function onloadFn()
 
   var score_host = 'http://scores.dashingstrike.com';
   if (window.location.host.indexOf('dashingstrike') === -1 ||
-    window.location.host.indexOf('staging')) {
+    window.location.host.indexOf('staging') !== -1) {
     score_host = 'http://scores.staging.dashingstrike.com';
   }
 
   var ready_countdown;
+  var music_on = false; // donotcheckin
+  var music_on_countdown;
   function choosePlayerInit() {
     if (!'donotcheckin') {
       if (!players.length) {
@@ -197,6 +206,18 @@ TurbulenzEngine.onload = function onloadFn()
   }
 
   function choosePlayer(dt) {
+    if (!music_on && sounds.muzak) {
+      playSound(sound_source_music, 'muzak');
+      music_on = true;
+      music_on_countdown = 1000;
+    }
+    if (music_on && music_on_countdown) {
+      sound_source_music.gain =  1 - (music_on_countdown/1000);
+      music_on_countdown -= dt;
+      if (music_on_countdown < 0) {
+        music_on_countdown = null;
+      }
+    }
     var ready_count = 0;
     input_devices.forEach(function (func, idx) {
       var player = null;
@@ -239,6 +260,8 @@ TurbulenzEngine.onload = function onloadFn()
         ready_countdown -= dt;
         if (ready_countdown < 0) {
           ready_countdown = 0;
+          sound_source_music.stop();
+          music_on = false;
           game_state = playInit;
         }
       }
@@ -1199,11 +1222,14 @@ TurbulenzEngine.onload = function onloadFn()
     if (window.need_repos) {
       --window.need_repos;
       var viewport = draw2D.getScreenSpaceViewport();
+      var height = viewport[3] - viewport[1];
+      var font_size = Math.min(64, Math.max(8, Math.floor(height/800 * 16)));
       $('#screen').css({
         left: viewport[0],
         top: viewport[1],
         width: viewport[2] - viewport[0],
-        height: viewport[3] - viewport[1],
+        height: height,
+        'font-size': font_size,
       });
     }
 

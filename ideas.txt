@@ -1,0 +1,44 @@
+LD34
+Deck building RPG where you grow cards
+  More work (much more?)
+  Would need:
+    A bunch of cards
+    Iterating on main mechanic
+    Gameplay flow - 
+      Given starter deck
+      Choose dungeon level to explore
+      First fight starts
+      Take turns - 
+        On turn, feed any number of cards to other cards (or just one?), play 1 action, play 1 fight, draw back to 5
+        Battle resolves
+      On victory, proceed to next fight, until floor is cleared
+      After each fight cards grow, maybe acquire cards from enemy
+      After each floor, get to buy new cards, maybe trash limited number of cards, or just choose set of 10 to start next floor with
+  Make this log-based, just HTML, nothing fancy?
+  MVP is: have deck, will fight, could try this and see if combat is fun, but really need deck building to be part of the core game loop - do you build your deck during combat (long combats) or have very quick combat with stats carrying over?  Quick is better, like GoD.
+  No reason this couldn't be Turbulenz, though some particles could go a long way, probably wouldn't get to them.
+  Attack/Def attributes - maybe just one 3 - Cut, Stab, Bash? As icons.
+  Feeding: Either:
+    Cards have XP, and they grow to bigger versions of themselves
+    Cards acquire attributes of what was fed to them (fractional, so it's at "Attack: 1 Cut (50% to next level)")
+      Some reason you just don't feed everything and have an I win card?  Cards keep at most 2 attributes, choose which two (possibly dropping a full one and acquiring a partial one) upon feeding?
+    Feeding immediately gives a boost equal to the eaten card, and then has a chance that some might be permanent after the turn?
+  Cards:
+    Fight
+      Basic Fight: Atk: 1 Cut
+      Basic Defend: Block: 1 Any
+      Parry: Block: 5 Stab
+    Action
+      Extra Fight
+      2 Extra Actions
+      +X to next fight
+    Feed?
+      Just XP boost to cards?  Does this trash the feeder?
+  
+InnerBodyish
+  Match theme somehow  want all plants alive, growing dead plants to health
+  How different?
+  Local multiplayer?  How would that be interesting?  Just high scores for now?
+  Could be done quickly and put in lots of polish.
+  Could be done in Turbulenz, w/o as much polish, no idea on particles, etc.
+  
