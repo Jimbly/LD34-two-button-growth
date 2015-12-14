@@ -197,8 +197,8 @@ TurbulenzEngine.onload = function onloadFn()
         }
         html.push('#' + (idx +1) + '. ' + score.score.toFixed(1) + '% ' + name);
       });
-      $('#main_highscores').html('<h3>Global High Scores</h3><div style="text-align: left; white-space: pre-wrap;" id="score_body"></div>');
-      $('#score_body').text(html.join('\n'));
+      $('#main_highscores').html('<h3>Global High Scores</h3><div style="text-align: left; white-space: pre-wrap;" id="main_score_body"></div>');
+      $('#main_score_body').text(html.join('\n'));
     }});
 
     ready_countdown = null;
