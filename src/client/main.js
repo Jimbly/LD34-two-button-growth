@@ -163,7 +163,7 @@ TurbulenzEngine.onload = function onloadFn()
   }, 'Tap on left', 'Tap on Right');
 
   var score_host = 'http://scores.dashingstrike.com';
-  if (window.location.host.indexOf('dashingstrike') === -1 ||
+  if (window.location.host.indexOf('localhost') !== -1 ||
     window.location.host.indexOf('staging') !== -1) {
     score_host = 'http://scores.staging.dashingstrike.com';
   }
