@@ -402,10 +402,9 @@ TurbulenzEngine.onload = function onloadFn()
   var powerup_size = 80;
   var bar_width = 128;
   var bar_pad = 2;
-  var lane_width;
   var bg0;
   var bg1;
-  var bgfade;
+  var bg_fade;
   var turf_good_left;
   var turf_bad_left;
   var turf_good_right;
@@ -427,49 +426,42 @@ TurbulenzEngine.onload = function onloadFn()
       }
       return pad + text;
     }).join(''));
-    var eff_players = Math.max(players.length, 1.5);
-    lane_width = game_width / eff_players;
     players.forEach(function (player, idx) {
       var spriteSize = 256;
-      var x = lane_width * idx + lane_width/2;
-      if (players.length === 1) {
-        x += lane_width * 0.25;
-      }
       var y = game_height / 2;
       player.sprite = createSprite('cloud.png', {
         width : spriteSize,
         height : spriteSize,
-        x,
+        x: 0,
         y: y - 20,
         rotation : 0,
         color: player_color,
         textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize)
       });
-      var beam_width = lane_width / 2;
       player.beam_left = createSprite('beam.png', {
         width : 32,
-        height : beam_width,
-        x : x - beam_width/2,
+        height : 32,
+        x : 0,
         y,
         rotation : Math.PI/2,
         color : color_white,
         textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize),
-        origin: [0, beam_width/2],
+        origin: [0, 16],
       });
       player.beam_right = createSprite('beam.png', {
         width : 32,
-        height : beam_width,
-        x : x + beam_width/2,
+        height : 32,
+        x : 0,
         y,
         rotation : Math.PI/2,
         color : color_white,
         textureRectangle : mathDevice.v4Build(0, 0, spriteSize, spriteSize),
-        origin: [0, beam_width/2],
+        origin: [0, 16],
       });
       player.bar_bg = createSprite('white', {
         width: bar_width,
         height: 28,
-        x: x - bar_width/2,
+        x: 0,
         y,
         color: [0.25, 0.25, 0.5, 0.5],
         textureRectangle : mathDevice.v4Build(0, 0, 2, 2),
@@ -478,7 +470,7 @@ TurbulenzEngine.onload = function onloadFn()
       player.bar_fg = createSprite('white', {
         width: bar_width - bar_pad * 2,
         height: 28 - bar_pad * 2,
-        x: x - bar_width/2 + bar_pad,
+        x: 0,
         y: y + bar_pad,
         color: color_green,
         textureRectangle : mathDevice.v4Build(0, 0, 2, 2),
@@ -489,7 +481,7 @@ TurbulenzEngine.onload = function onloadFn()
     if (!turf_good_left) {
       let spriteSize = 256;
       let width = spriteSize;
-      let height = game_width / eff_players / 4;
+      let height = 256;
       turf_good_left = createSprite('turf_good.png', {
         width,
         height,
@@ -564,7 +556,7 @@ TurbulenzEngine.onload = function onloadFn()
         textureRectangle : mathDevice.v4Build(0, 0, 512, 1024),
         origin: [0,0],
       });
-      bgfade = createSprite('bg_fade.png', {
+      bg_fade = createSprite('bg_fade.png', {
         width: 512,
         height: 1024,
         x: 0,
@@ -620,7 +612,6 @@ TurbulenzEngine.onload = function onloadFn()
     play(dt);
   }
 
-  var padding = 100;
   var end_delay_px = 250;
   var timer = 0;
 
@@ -639,6 +630,8 @@ TurbulenzEngine.onload = function onloadFn()
 
   function play(dt) {
     timer += dt;
+    var full_viewport = draw2D.getViewport();
+    var padding = -full_viewport[1] + 300;
     var delta_speed_mod = dt / 3000;
     dt *= Math.pow(1.5, speed_mod);
     // speed_mod = 10; // donotcheckin
@@ -648,6 +641,22 @@ TurbulenzEngine.onload = function onloadFn()
       speed_mod = Math.min(0, speed_mod + delta_speed_mod);
     }
     var any_not_done = false;
+
+    // determine lane widths, etc
+    let player_x0 = full_viewport[0];
+    let lane_height = full_viewport[3] - full_viewport[1];
+    let lane_width = (full_viewport[2] - full_viewport[0]) / players.length;
+    if (lane_width > lane_height) {
+      lane_width = lane_height;
+      player_x0 += ((full_viewport[2] - full_viewport[0]) - lane_width * players.length) / 2;
+    }
+    let beam_width = lane_width / 2;
+    let turf_height = lane_width / 4;
+    turf_good_left.setHeight(turf_height);
+    turf_bad_left.setHeight(turf_height);
+    turf_good_right.setHeight(turf_height);
+    turf_bad_right.setHeight(turf_height);
+
     // determine appropriate positional offsets
     var min_score=1;
     var max_score=0;
@@ -671,10 +680,7 @@ TurbulenzEngine.onload = function onloadFn()
         speed_scale_left = level_params.speed_scale_right;
         speed_scale_right = 1;
       }
-      var x0 = lane_width * idx;
-      if (players.length === 1) {
-        x0 += lane_width * 0.25;
-      }
+      var x0 = player_x0 + lane_width * idx;
       var x1 = x0 + lane_width;
       var input_device = input_devices[player.input_idx];
       var state = input_device();
@@ -695,28 +701,41 @@ TurbulenzEngine.onload = function onloadFn()
       let y0 = game_height/2 - player.pos_offset;
       let y0_warp = game_height/2 + player.pos_offset;
 
+      player.sprite.x = x0 + lane_width / 2;
       player.sprite.y = y0 - 8;
+      player.beam_left.setHeight(beam_width);
+      player.beam_left.x = x0 + lane_width / 4;
       player.beam_left.y = y0;
+      player.beam_right.setHeight(beam_width);
+      player.beam_right.x = x1 - lane_width / 4;
       player.beam_right.y = y0;
+      player.bar_bg.x = player.sprite.x - bar_width/2;
       player.bar_bg.y = y0;
+      player.bar_fg.x = player.sprite.x - bar_width/2 + bar_pad;
       player.bar_fg.y = y0 + bar_pad;
 
       bg0.x = x0;
       bg1.x = x0;
-      bgfade.x = x0;
+      bg_fade.x = x0;
       bg0.setWidth(lane_width);
       bg1.setWidth(lane_width);
-      bgfade.setWidth(lane_width);
-      bg0.y = timer * 0.1 % 1024;
-      draw2D.drawSprite(bg0);
-      bg0.y -= 1024;
-      draw2D.drawSprite(bg0);
-      bg1.y = timer * 0.12 % 1024;
-      draw2D.drawSprite(bg1);
-      bg1.y -= 1024;
-      draw2D.drawSprite(bg1);
-      bgfade.y = 0;
-      draw2D.drawSprite(bgfade);
+      bg_fade.setWidth(lane_width);
+
+      bg0.y = full_viewport[1] + timer * 0.1 % 1024 - 1024;
+      while (bg0.y < full_viewport[3]) {
+        draw2D.drawSprite(bg0);
+        bg0.y += 1024;
+      }
+
+      bg1.y = full_viewport[1] + timer * 0.12 % 1024 - 1024;
+      while (bg1.y < full_viewport[3]) {
+        draw2D.drawSprite(bg1);
+        bg1.y += 1024;
+      }
+
+      bg_fade.y = full_viewport[1];
+      bg_fade.setHeight(full_viewport[3] - full_viewport[1]);
+      draw2D.drawSprite(bg_fade);
 
       function drawTiledSpriteLeft(sprite, x, y, u, w) {
         u = u / TILE_DIST;
@@ -1217,11 +1236,29 @@ TurbulenzEngine.onload = function onloadFn()
     var dt = Math.min(Math.max(now - last_tick, 1), 250);
     last_tick = now;
     input.tick();
-    draw2D.configure(configureParams);
+
+    {
+      let screen_width = graphicsDevice.width;
+      let screen_height = graphicsDevice.height;
+      let screen_aspect = screen_width / screen_height;
+      let view_aspect = game_width / game_height;
+      if (screen_aspect > view_aspect) {
+        let viewport_width = game_height * screen_aspect;
+        let half_diff = (viewport_width - game_width) / 2;
+        configureParams.viewportRectangle = [-half_diff, 0, game_width + half_diff, game_height];
+      } else {
+        let viewport_height = game_width / screen_aspect;
+        let half_diff = (viewport_height - game_height) / 2;
+        configureParams.viewportRectangle = [0, -half_diff, game_width, game_height + half_diff];
+      }
+      draw2D.configure(configureParams);
+    }
 
     if (window.need_repos) {
       --window.need_repos;
-      var viewport = draw2D.getScreenSpaceViewport();
+      var ul = draw2D.viewportUnmap(0, 0);
+      var lr = draw2D.viewportUnmap(game_width-1, game_height-1);
+      var viewport = [ul[0], ul[1], lr[0], lr[1]];
       var height = viewport[3] - viewport[1];
       var font_size = Math.min(64, Math.max(8, Math.floor(height/800 * 16)));
       $('#screen').css({
@@ -1229,6 +1266,9 @@ TurbulenzEngine.onload = function onloadFn()
         top: viewport[1],
         width: viewport[2] - viewport[0],
         height: height,
+        'font-size': font_size,
+      });
+      $('#screen2').css({
         'font-size': font_size,
       });
     }
