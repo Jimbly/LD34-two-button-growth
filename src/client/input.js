@@ -159,7 +159,6 @@ class GlovInput {
     this.pad_states[padindex][padcode] = UP_EDGE;
   }
   onPadDown(padindex, padcode) {
-    console.log(padindex, padcode);
     this.pad_states[padindex] = this.pad_states[padindex] || { axes: {} };
     this.pad_states[padindex][padcode] = DOWN_EDGE;
   }
