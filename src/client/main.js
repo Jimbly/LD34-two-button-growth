@@ -23,6 +23,12 @@ TurbulenzEngine.onload = function onloadFn()
     linearDistance : false
   };
   var soundDevice = TurbulenzEngine.createSoundDevice(soundDeviceParameters);
+  window.document.body.addEventListener('click', function () {
+    soundDevice.resume();
+  });
+  window.document.body.addEventListener('keydown', function () {
+    soundDevice.resume();
+  });
   var camera = Camera.create(mathDevice);
   var lookAtPosition = mathDevice.v3Build(0.0, 0.0, 0.0);
   var worldUp = mathDevice.v3BuildYAxis();
@@ -207,7 +213,7 @@ TurbulenzEngine.onload = function onloadFn()
 
   function choosePlayer(dt) {
     if (!music_on && sounds.muzak) {
-      playSound(sound_source_music, 'muzak');
+      playSound(sound_source_music, 'muzak', true);
       music_on = true;
       music_on_countdown = 1000;
     }
@@ -615,7 +621,7 @@ TurbulenzEngine.onload = function onloadFn()
   var end_delay_px = 250;
   var timer = 0;
 
-  function playSound(source, soundname) {
+  function playSound(source, soundname, on_resume) {
     if (!sounds[soundname]) {
       return;
     }
@@ -624,7 +630,7 @@ TurbulenzEngine.onload = function onloadFn()
     if (timer - last_played_time < 45) {
       return;
     }
-    source.play(sounds[soundname]);
+    source.play(sounds[soundname], 0, on_resume);
     source._last_played[soundname] = timer;
   }
 
